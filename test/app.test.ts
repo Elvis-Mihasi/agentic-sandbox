@@ -65,3 +65,19 @@ describe("runs api", () => {
     expect(res.body.details).toHaveLength(3);
   });
 });
+
+describe("vehicles api", () => {
+  it("lists distinct seeded vehicle IDs sorted ascending", async () => {
+    const app = createApp({ config: loadConfig({ PORT: "0" }), store: new RunStore(SEED_RUNS) });
+    const res = await request(app).get("/api/vehicles");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(["WVW-1001", "WVW-2042", "WVW-3310"]);
+  });
+
+  it("returns an empty array for an empty store", async () => {
+    const app = createApp({ config: loadConfig({ PORT: "0" }), store: new RunStore() });
+    const res = await request(app).get("/api/vehicles");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+});

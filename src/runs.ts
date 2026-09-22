@@ -63,6 +63,12 @@ export class RunStore {
     return this.runs.get(id);
   }
 
+  vehicleIds(): string[] {
+    const ids = new Set<string>();
+    for (const run of this.runs.values()) ids.add(run.vehicleId);
+    return [...ids].sort();
+  }
+
   create(input: NewRun): MeasurementRun {
     this.seq += 1;
     const run: MeasurementRun = {

@@ -45,6 +45,7 @@ npm run e2e          # browser tests, server must be running, browser installed 
 |---|---|---|
 | `GET /health` | `{ status, version, region }` | |
 | `GET /api/runs` | all runs; `?vehicleId=` filters | |
+| `GET /api/vehicles` | distinct vehicle IDs with a run, sorted ascending | |
 | `GET /api/runs/:id` | one run | 404 `{ error: "run not found", id }` |
 | `POST /api/runs` | 201 with the created run | 400 `{ error, details: string[] }` |
 
