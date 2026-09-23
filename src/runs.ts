@@ -22,7 +22,17 @@ export class ValidationError extends Error {
   }
 }
 
+export class InvalidTransitionError extends Error {
+  constructor(
+    public readonly from: RunStatus,
+    public readonly to: RunStatus,
+  ) {
+    super("invalid transition");
+  }
+}
+
 const CYCLES: Cycle[] = ["WLTC", "NEDC", "RDE"];
+const STATUSES: RunStatus[] = ["planned", "running", "done"];
 
 export function validateNewRun(input: unknown): NewRun {
   const details: string[] = [];
@@ -46,6 +56,14 @@ export function validateNewRun(input: unknown): NewRun {
   };
 }
 
+export function validateStatus(input: unknown): RunStatus {
+  const status = (input ?? {}) as Record<string, unknown>;
+  if (!STATUSES.includes(status.status as RunStatus)) {
+    throw new ValidationError([`status must be one of ${STATUSES.join("|")}`]);
+  }
+  return status.status as RunStatus;
+}
+
 export class RunStore {
   private readonly runs = new Map<string, MeasurementRun>();
   private seq = 0;
@@ -61,6 +79,20 @@ export class RunStore {
 
   get(id: string): MeasurementRun | undefined {
     return this.runs.get(id);
+  }
+
+  updateStatus(id: string, status: RunStatus): MeasurementRun | undefined {
+    const run = this.runs.get(id);
+    if (!run) return undefined;
+    if (
+      (run.status === "planned" && status !== "running") ||
+      (run.status === "running" && status !== "done") ||
+      run.status === "done"
+    ) {
+      throw new InvalidTransitionError(run.status, status);
+    }
+    run.status = status;
+    return run;
   }
 
   create(input: NewRun): MeasurementRun {
