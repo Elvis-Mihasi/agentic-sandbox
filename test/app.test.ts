@@ -64,4 +64,14 @@ describe("runs api", () => {
     expect(res.status).toBe(400);
     expect(res.body.details).toHaveLength(3);
   });
+
+  it("rejects co2 values outside 0 to 500", async () => {
+    const tooLow = await request(app).post("/api/runs").send({ vehicleId: "WVW-1003", cycle: "WLTC", co2GramsPerKm: -1 });
+    const tooHigh = await request(app).post("/api/runs").send({ vehicleId: "WVW-1004", cycle: "WLTC", co2GramsPerKm: 501 });
+
+    expect(tooLow.status).toBe(400);
+    expect(tooLow.body.details).toContain("co2GramsPerKm must be between 0 and 500");
+    expect(tooHigh.status).toBe(400);
+    expect(tooHigh.body.details).toContain("co2GramsPerKm must be between 0 and 500");
+  });
 });
