@@ -2,7 +2,13 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AppConfig } from "./config.js";
-import { RunStore, ValidationError, validateNewRun } from "./runs.js";
+import {
+  InvalidTransitionError,
+  RunStore,
+  ValidationError,
+  validateNewRun,
+  validateStatus,
+} from "./runs.js";
 
 export const APP_VERSION = "1.0.0";
 
@@ -33,6 +39,13 @@ export function createApp({ config, store }: AppContext): Express {
     return res.json(run);
   });
 
+  app.patch("/api/runs/:id/status", (req, res) => {
+    const status = validateStatus(req.body);
+    const run = store.updateStatus(req.params.id, status);
+    if (!run) return res.status(404).json({ error: "run not found", id: req.params.id });
+    return res.json(run);
+  });
+
   app.post("/api/runs", (req, res) => {
     const input = validateNewRun(req.body);
     const run = store.create(input);
@@ -42,6 +55,9 @@ export function createApp({ config, store }: AppContext): Express {
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message, details: err.details });
+    }
+    if (err instanceof InvalidTransitionError) {
+      return res.status(409).json({ error: err.message, from: err.from, to: err.to });
     }
     if (err instanceof SyntaxError) {
       return res.status(400).json({ error: "invalid JSON body" });
