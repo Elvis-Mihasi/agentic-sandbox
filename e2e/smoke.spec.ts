@@ -20,3 +20,18 @@ test("user can add a run through the UI", async ({ page }) => {
   await expect(page.locator("tbody#runs tr")).toHaveCount(rowsBefore + 1);
   await expect(page.locator("tbody#runs")).toContainText("WVW-E2E1");
 });
+
+test("user can filter runs by vehicle", async ({ page }) => {
+  await page.goto("/");
+  const rows = page.getByRole("table", { name: "Runs" }).getByRole("row");
+  const rowsBefore = await rows.count();
+  expect(rowsBefore).toBeGreaterThan(1);
+
+  await page.getByLabel("Filter by vehicle").fill("WVW-1001");
+
+  await expect(rows.filter({ hasText: "WVW-1001" })).toHaveCount(2);
+  await expect(rows.filter({ hasText: "WVW-2042" })).toHaveCount(0);
+
+  await page.getByLabel("Filter by vehicle").clear();
+  await expect(rows).toHaveCount(rowsBefore);
+});
